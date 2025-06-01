@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>COVID-19 Data Dashboard - Enhanced</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Custom scrollbar for a cleaner look (optional) */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            /* background-color: #f0f2f5; /* Light gray background for a softer look - overridden by body class */
+        }
+
+        /* Ensure canvas is responsive */
+        #covidChartContainer {
+            position: relative;
+            margin: auto;
+            height: 60vh;
+            /* Adjust height as needed */
+            width: 90%;
+            /* Adjust width as needed */
+            max-width: 1000px;
+            /* Max width for larger screens */
+        }
+
+        @media (max-width: 768px) {
+            #covidChartContainer {
+                height: 50vh;
+                width: 95%;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-gradient-to-br from-slate-900 to-slate-700 text-slate-50 min-h-screen">
+    <header class="py-8 shadow-lg bg-slate-800/50 backdrop-blur-md">
+        <div class="container mx-auto px-6 text-center">
+            <h1
+                class="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">
+                COVID-19 Big Data Dashboard
+            </h1>
+            <p class="mt-3 text-lg text-slate-300">
+                Visualizing pandemic data with enhanced analytics and a professional interface.
+            </p>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <!-- Chart Section -->
+        <section id="chart-section"
+            class="mb-12 p-6 bg-slate-800 rounded-2xl shadow-2xl hover:shadow-emerald-500/40 transition-shadow duration-300">
+            <h2 class="text-2xl font-bold text-center text-slate-100 mb-6">
+                COVID-19 Trends (Sample Data: Global Focus)
+            </h2>
+            <div id="covidChartContainer" class="bg-slate-700 p-4 rounded-lg shadow-inner">
+                <canvas id="covidChart" aria-label="COVID-19 Line Chart" role="img"></canvas>
+            </div>
+        </section>
+
+        <!-- Table Section -->
+        <section id="table-section"
+            class="p-6 bg-slate-800 rounded-2xl shadow-2xl hover:shadow-cyan-500/40 transition-shadow duration-300">
+            <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+                <h2 class="text-2xl font-bold text-slate-100">
+                    COVID-19 Daily Report
+                </h2>
+                <div class="relative w-full sm:w-auto">
+                    <input type="text" id="countryFilter" placeholder="Filter by country..."
+                        class="w-full pl-10 pr-4 py-2 rounded-lg bg-slate-700 text-slate-200 border border-slate-600 focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all duration-300 shadow-md"
+                        aria-label="Filter by country" />
+                    <svg class="w-5 h-5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                        aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto rounded-lg shadow-inner bg-slate-700">
+                <table id="data-table" class="w-full min-w-max text-sm text-left text-slate-300">
+                    <thead class="text-xs text-emerald-400 uppercase bg-slate-750 sticky top-0 z-10">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 rounded-tl-lg">Date</th>
+                            <th scope="col" class="px-6 py-3">Country</th>
+                            <th scope="col" class="px-6 py-3 text-right">Confirmed</th>
+                            <th scope="col" class="px-6 py-3 text-right">Recovered</th>
+                            <th scope="col" class="px-6 py-3 text-right rounded-tr-lg">Deaths</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-600">
+                        <!-- Dynamic content will go here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="no-data-message" class="text-center py-8 text-slate-400 hidden">
+                <p class="text-xl">No data available for the selected filter.</p>
+            </div>
+        </section>
+    </main>
+
+
+    <footer class="py-8 mt-12 text-center text-slate-400 border-t border-slate-700">
+        <p>&copy; <span id="currentYear"></span> COVID-19 Data Dashboard. For educational purposes.</p>
+    </footer>
+
+    <script>
+        // --- Sample Data (replaces data.csv) ---
+        const sampleCSVData = `Date,Country,Confirmed,Recovered,Deaths
+2023-01-01,USA,1000,800,50
+2023-01-01,India,1200,900,60
+2023-01-01,Brazil,800,600,40
+2023-01-01,UK,700,500,30
+2023-01-01,Germany,600,450,25
+2023-01-02,USA,1050,820,52
+2023-01-02,India,1280,950,65
+2023-01-02,Brazil,830,610,42
+2023-01-02,UK,720,510,33
+2023-01-02,Germany,615,460,27
+2023-01-03,USA,1100,850,55
+2023-01-03,India,1350,1000,70
+2023-01-03,Brazil,860,630,45
+2023-01-03,UK,750,530,35
+2023-01-03,Germany,630,470,28
+2023-01-04,USA,1180,890,60
+2023-01-04,India,1420,1080,75
+2023-01-04,Brazil,900,670,48
+2023-01-04,UK,790,560,38
+2023-01-04,Germany,650,490,30
+2023-01-05,USA,1250,950,65
+2023-01-05,India,1500,1150,80
+2023-01-05,Brazil,950,710,50
+2023-01-05,UK,830,600,40
+2023-01-05,Germany,680,520,32`;
+
+        let covidChartInstance = null; // To hold the chart instance for updates/destruction
+
+        // --- Main Data Processing and Display Function ---
+        async function loadAndDisplayData() {
+            // In a real scenario, you'd fetch. Here, we use the sampleCSVData.
+            const dataText = sampleCSVData;
+
+            // Corrected: Split by newline character '\n' instead of literal '\\n'
+            const rows = dataText.trim().split('\n');
+            const headersLine = rows.shift(); // Get and remove header line
+            if (!headersLine) {
+                console.error("CSV data is empty or header row is missing.");
+                populateTable([]); // Show no data message
+                plotChart({ labels: [], confirmed: [], recovered: [], deaths: [] }); // Empty chart
+                return;
+            }
+            const headers = headersLine.split(',');
+
+            const allCountryData = rows.map(row => {
+                const values = row.split(',');
+                let entry = {};
+                headers.forEach((header, index) => {
+                    // Trim header and value to avoid issues with whitespace
+                    entry[header.trim()] = values[index] ? values[index].trim() : '';
+                });
+                return entry;
+            }).filter(entry => entry.Date && entry.Country); // Ensure essential fields are present
+
+            populateTable(allCountryData);
+            setupCountryFilter(allCountryData);
+
+            const aggregatedChartData = aggregateDataForChart(allCountryData);
+            plotChart(aggregatedChartData);
+        }
+
+        // --- Aggregate data for the main chart (Global Totals) ---
+        function aggregateDataForChart(data) {
+            const dailyTotals = {}; // { 'date': { confirmed: x, recovered: y, deaths: z } }
+
+            data.forEach(item => {
+                const date = item.Date;
+                if (!date) return; // Skip if date is missing
+
+                if (!dailyTotals[date]) {
+                    dailyTotals[date] = { confirmed: 0, recovered: 0, deaths: 0 };
+                }
+                dailyTotals[date].confirmed += parseInt(item.Confirmed) || 0;
+                dailyTotals[date].recovered += parseInt(item.Recovered) || 0;
+                dailyTotals[date].deaths += parseInt(item.Deaths) || 0;
+            });
+
+            const sortedDates = Object.keys(dailyTotals).sort((a, b) => new Date(a) - new Date(b));
+
+            return {
+                labels: sortedDates,
+                confirmed: sortedDates.map(date => dailyTotals[date].confirmed),
+                recovered: sortedDates.map(date => dailyTotals[date].recovered),
+                deaths: sortedDates.map(date => dailyTotals[date].deaths),
+            };
+        }
+
+
+        // --- Populate Table ---
+        function populateTable(data) {
+            const tableBody = document.querySelector('#data-table tbody');
+            const noDataMessage = document.getElementById('no-data-message');
+            tableBody.innerHTML = ''; // Clear existing rows
+
+            if (data.length === 0) {
+                noDataMessage.classList.remove('hidden');
+                document.querySelector('#data-table').classList.add('hidden'); // Hide entire table if no data
+            } else {
+                noDataMessage.classList.add('hidden');
+                document.querySelector('#data-table').classList.remove('hidden'); // Show table
+                data.forEach(item => {
+                    const tr = document.createElement('tr');
+                    tr.className = 'hover:bg-slate-600/50 transition-colors duration-150';
+                    // Ensure numbers are parsed before toLocaleString to avoid NaN issues if they are already numbers
+                    const confirmed = parseInt(item.Confirmed) || 0;
+                    const recovered = parseInt(item.Recovered) || 0;
+                    const deaths = parseInt(item.Deaths) || 0;
+
+                    tr.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap">${item.Date || 'N/A'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${item.Country || 'N/A'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right">${confirmed.toLocaleString()}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right">${recovered.toLocaleString()}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right">${deaths.toLocaleString()}</td>
+                    `;
+                    tableBody.appendChild(tr);
+                });
+            }
+        }
+
+        // --- Plot Chart using Chart.js ---
+        function plotChart(chartData) {
+            const chartCanvas = document.getElementById('covidChart');
+            const ctx = chartCanvas.getContext('2d');
+
+            // Ensure chart takes full height of container
+            chartCanvas.height = chartCanvas.parentElement.clientHeight;
+
+            if (covidChartInstance) {
+                covidChartInstance.destroy(); // Destroy previous chart instance if exists
+            }
+
+            covidChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: chartData.labels || [],
+                    datasets: [
+                        {
+                            label: 'Confirmed Cases',
+                            data: chartData.confirmed || [],
+                            borderColor: 'rgb(56, 189, 248)',
+                            backgroundColor: 'rgba(56, 189, 248, 0.2)',
+                            tension: 0.3,
+                            fill: true,
+                            pointBackgroundColor: 'rgb(56, 189, 248)',
+                            pointBorderColor: '#fff',
+                            pointHoverBackgroundColor: '#fff',
+                            pointHoverBorderColor: 'rgb(56, 189, 248)'
+                        },
+                        {
+                            label: 'Recovered',
+                            data: chartData.recovered || [],
+                            borderColor: 'rgb(16, 185, 129)',
+                            backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                            tension: 0.3,
+                            fill: true,
+                            pointBackgroundColor: 'rgb(16, 185, 129)',
+                            pointBorderColor: '#fff',
+                            pointHoverBackgroundColor: '#fff',
+                            pointHoverBorderColor: 'rgb(16, 185, 129)'
+                        },
+                        {
+                            label: 'Deaths',
+                            data: chartData.deaths || [],
+                            borderColor: 'rgb(244, 63, 94)',
+                            backgroundColor: 'rgba(244, 63, 94, 0.2)',
+                            tension: 0.3,
+                            fill: true,
+                            pointBackgroundColor: 'rgb(244, 63, 94)',
+                            pointBorderColor: '#fff',
+                            pointHoverBackgroundColor: '#fff',
+                            pointHoverBorderColor: 'rgb(244, 63, 94)'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false, // Required for filling div height
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                color: 'rgba(203, 213, 225, 0.1)'
+                            },
+                            ticks: {
+                                color: 'rgb(156, 163, 175)',
+                                maxRotation: 0,
+                                autoSkip: true,
+                                maxTicksLimit: 10
+                            }
+                        },
+                        y: {
+                            grid: {
+                                color: 'rgba(203, 213, 225, 0.1)'
+                            },
+                            ticks: {
+                                color: 'rgb(156, 163, 175)',
+                                callback: function (value) {
+                                    if (value >= 1000000) return (value / 1000000).toFixed(1) + 'M';
+                                    if (value >= 1000) return (value / 1000).toFixed(0) + 'K';
+                                    return value;
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                color: 'rgb(203, 213, 225)',
+                                usePointStyle: true,
+                                boxWidth: 8,
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Global COVID-19 Daily Trends',
+                            color: 'rgb(241, 245, 249)',
+                            font: {
+                                size: 18,
+                                weight: '600'
+                            },
+                            padding: {
+                                top: 10,
+                                bottom: 20
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(30, 41, 59, 0.9)',
+                            titleColor: 'rgb(241, 245, 249)',
+                            bodyColor: 'rgb(203, 213, 225)',
+                            borderColor: 'rgb(51, 65, 85)',
+                            borderWidth: 1,
+                            padding: 10,
+                            displayColors: true,
+                            boxPadding: 4
+                        }
+                    }
+                }
+            });
+        }
+
+        // --- Setup Country Filter ---
+        function setupCountryFilter(allData) {
+            const filterInput = document.getElementById('countryFilter');
+            filterInput.addEventListener('input', (event) => {
+                const searchTerm = event.target.value.toLowerCase();
+                const filteredData = allData.filter(item =>
+                    item.Country && item.Country.toLowerCase().includes(searchTerm)
+                );
+                populateTable(filteredData);
+            });
+        }
+
+        // --- Set current year in footer ---
+        document.getElementById('currentYear').textContent = new Date().getFullYear();
+
+        // --- Initial Load ---
+        document.addEventListener('DOMContentLoaded', loadAndDisplayData);
+    </script>
+</body>
+
+</html>
